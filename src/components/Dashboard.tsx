@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
-import { Profile, Link, Theme } from '../lib/supabase';
+import { Profile, Link, Theme, Template } from '../lib/supabase';
 import { profileService } from '../services/profileService';
 import { linkService } from '../services/linkService';
 import { themeService } from '../services/themeService';
+import { templateService } from '../services/templateService';
 import LinkManager from './LinkManager';
 import ProfileEditor from './ProfileEditor';
 import ThemeSelector from './ThemeSelector';
+import TemplateGallery from './TemplateGallery';
 import LivePreview from './LivePreview';
 import Analytics from './Analytics';
 import { Layout, Link as LinkIcon, Palette, BarChart3 } from 'lucide-react';
 
-type TabType = 'links' | 'profile' | 'themes' | 'analytics';
+type TabType = 'links' | 'profile' | 'themes' | 'analytics' | 'templates';
 
 interface DashboardProps {
   profileId: string;
@@ -20,7 +22,8 @@ export default function Dashboard({ profileId }: DashboardProps) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [links, setLinks] = useState<Link[]>([]);
   const [themes, setThemes] = useState<Theme[]>([]);
-  const [activeTab, setActiveTab] = useState<TabType>('links');
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [activeTab, setActiveTab] = useState<TabType>('templates');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,15 +33,17 @@ export default function Dashboard({ profileId }: DashboardProps) {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const [profileData, linksData, themesData] = await Promise.all([
+      const [profileData, linksData, themesData, templatesData] = await Promise.all([
         profileService.getProfileById(profileId),
         linkService.getLinksByProfileId(profileId),
-        themeService.getAllThemes()
+        themeService.getAllThemes(),
+        templateService.getAllTemplates()
       ]);
 
       setProfile(profileData);
       setLinks(linksData);
       setThemes(themesData);
+      setTemplates(templatesData);
     } catch (error) {
       console.error('Error loading dashboard:', error);
     } finally {
@@ -82,9 +87,9 @@ export default function Dashboard({ profileId }: DashboardProps) {
   }
 
   const tabs = [
+    { id: 'templates' as TabType, label: 'Templates', icon: Palette },
     { id: 'links' as TabType, label: 'Links', icon: LinkIcon },
     { id: 'profile' as TabType, label: 'Profile', icon: Layout },
-    { id: 'themes' as TabType, label: 'Themes', icon: Palette },
     { id: 'analytics' as TabType, label: 'Analytics', icon: BarChart3 }
   ];
 
@@ -124,6 +129,19 @@ export default function Dashboard({ profileId }: DashboardProps) {
               </div>
 
               <div className="p-6">
+                {activeTab === 'templates' && (
+                  <TemplateGallery
+                    templates={templates}
+                    currentTemplate={profile.template_name}
+                    currentColors={profile.custom_colors}
+                    onTemplateSelect={(templateName, colors) =>
+                      handleProfileUpdate({ template_name: templateName, custom_colors: colors })
+                    }
+                    onCustomizeColors={(colors) =>
+                      handleProfileUpdate({ custom_colors: colors })
+                    }
+                  />
+                )}
                 {activeTab === 'links' && (
                   <LinkManager
                     profileId={profile.id}
@@ -137,13 +155,6 @@ export default function Dashboard({ profileId }: DashboardProps) {
                     onUpdate={handleProfileUpdate}
                   />
                 )}
-                {activeTab === 'themes' && (
-                  <ThemeSelector
-                    currentThemeId={profile.theme_id}
-                    themes={themes}
-                    onThemeSelect={(themeId) => handleProfileUpdate({ theme_id: themeId })}
-                  />
-                )}
                 {activeTab === 'analytics' && (
                   <Analytics links={links} />
                 )}
@@ -152,7 +163,7 @@ export default function Dashboard({ profileId }: DashboardProps) {
           </div>
 
           <div className="lg:col-span-1">
-            <LivePreview profile={profile} links={links} themes={themes} />
+            <LivePreview profile={profile} links={links} />
           </div>
         </div>
       </div>

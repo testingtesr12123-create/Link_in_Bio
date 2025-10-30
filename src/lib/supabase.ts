@@ -14,6 +14,14 @@ export type Profile = {
   background_image_url: string | null;
   theme_id: number;
   custom_css: string | null;
+  template_name: string;
+  custom_colors: {
+    background: string;
+    text: string;
+    primary: string;
+    secondary: string;
+    accent: string;
+  };
   created_at: string;
   updated_at: string;
 };
@@ -48,4 +56,21 @@ export type LinkClick = {
   clicked_at: string;
   user_agent: string | null;
   referrer: string | null;
+};
+
+export type Template = {
+  id: string;
+  name: string;
+  display_name: string;
+  description: string;
+  preview_image_url: string | null;
+  layout_type: string;
+  default_colors: {
+    background: string;
+    text: string;
+    primary: string;
+    secondary: string;
+    accent: string;
+  };
+  created_at: string;
 };
